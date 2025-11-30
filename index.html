@@ -104,7 +104,7 @@
     <div class="top-comparison-section">
         <div class="comparison-container">
             <div class="left-panel">
-                <video id="my-video" autoplay loop muted playsinline>
+                <video id="my-video" autoplay playsinline>
                     <source id="video-source" src="base.mp4" type="video/mp4">
                     죄송합니다. 귀하의 브라우저는 비디오 태그를 지원하지 않습니다.
                 </video>
@@ -140,8 +140,10 @@
         const myVideo = document.getElementById('my-video'); // 왼쪽 영상 요소
         const videoSource = document.getElementById('video-source'); // 비디오 소스 요소
 
-        // 1. 브라우저 정책을 우회하기 위한 스크립트
+        // 1. 기본 비디오 설정 (음소거 및 반복)
         if (myVideo) {
+            myVideo.loop = true; // 기본 영상은 반복
+            myVideo.muted = true; // 기본 영상은 음소거 (자동 재생 보장)
             myVideo.play().catch(error => {
                 console.log("자동 재생이 차단되었습니다. 페이지를 클릭해 주세요.");
                 document.addEventListener('click', () => {
@@ -149,8 +151,28 @@
                 }, { once: true });
             });
         }
+        
+        // 2. 비디오 종료 시 base.mp4로 돌아가는 리스너 추가 (가장 중요한 변경)
+        myVideo.addEventListener('ended', () => {
+            // 현재 재생 중인 비디오가 base.mp4가 아닐 경우에만 기본으로 복귀
+            if (myVideo.currentSrc && myVideo.currentSrc.indexOf(BASE_VIDEO_PATH) === -1) {
+                switchToBaseVideo();
+            }
+        });
 
-        // 2. 웹캠 접근 요청 함수
+        // 기본 비디오로 복귀하는 함수
+        function switchToBaseVideo() {
+            // 소스를 base.mp4로 변경
+            videoSource.src = BASE_VIDEO_PATH;
+            myVideo.load();
+            
+            // 기본 영상은 다시 반복 및 음소거 설정
+            myVideo.loop = true;
+            myVideo.muted = true; 
+            myVideo.play().catch(e => console.error("기본 비디오 재생 실패:", e));
+        }
+
+        // 3. 웹캠 접근 요청 함수
         async function startWebcam() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -179,8 +201,8 @@
 
         // --- 전역 변수 및 설정 ---
         let intersectedObject = null;
-        let originalScale = new THREE.Vector3(); // 원래 스케일 저장
-        let rotationSpeed = 0.005; // 자동 회전 속도
+        let originalScale = new THREE.Vector3(); 
+        let rotationSpeed = 0.005; 
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
@@ -200,14 +222,13 @@
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 3.0;
         const HOVER_SCALE_FACTOR = 1.2; // 마우스 오버 시 확대 비율
-        const VIDEO_RESET_DELAY = 3000; // 비디오 교체 후 base.mp4로 돌아오는 시간 (ms)
         const BASE_VIDEO_PATH = "base.mp4"; // 기본 비디오 경로
         // 🌟🌟🌟 ------------------------------------ 🌟🌟🌟
 
 
         // 1. 기본 3요소 설정
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff); // 배경색: 연한 회색으로 변경 (3D 섹션 구분을 위해)
+        scene.background = new THREE.Color(0xffffff); 
 
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
         camera.position.set(0, 0, 15);
@@ -227,14 +248,14 @@
         // 3. 컨트롤 설정
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.target.set(0, FIXED_POSITION_Y, 0); // 카메라 타겟을 모델 중심으로 설정
+        controls.target.set(0, FIXED_POSITION_Y, 0); 
         controls.enablePan = false;
-        controls.enableRotate = true; // 궤도 회전 활성화 
+        controls.enableRotate = true; 
         controls.maxDistance = 20;
         controls.minDistance = 5;
 
 
-        // 4. GLB 파일 로드!
+        // 4. GLB 파일 로드
         const loader = new GLTFLoader();
         const modelCount = modelsToLoad.length;
         const startX = -((modelCount - 1) * MODEL_SPACING_X) / 2;
@@ -245,18 +266,16 @@
                 function (gltf) {
                     const model = gltf.scene;
 
-                    // X축 일렬 위치 계산
+                    // 위치 설정
                     model.position.x = startX + (index * MODEL_SPACING_X);
-                    // Y축 (높이) = -4.0 고정
                     model.position.y = FIXED_POSITION_Y;
-                    // Z축 (깊이) = 0.0 고정
                     model.position.z = FIXED_POSITION_Z;
 
                     // 모델 크기 및 userData 설정
                     model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
                     model.userData.modelName = modelInfo.name;
-                    model.userData.modelVideo = modelInfo.video; // 모델에 해당하는 비디오 경로 저장
-                    model.userData.originalScale = model.scale.clone(); // 원래 스케일 저장
+                    model.userData.modelVideo = modelInfo.video; 
+                    model.userData.originalScale = model.scale.clone(); 
 
                     scene.add(model);
                 },
@@ -268,7 +287,7 @@
         });
 
 
-        // 5. 마우스 이벤트 리스너 추가 (마우스 오버, 아웃, 클릭)
+        // 5. 마우스 이벤트 리스너 추가 (클릭 핸들러 수정됨)
         renderer.domElement.addEventListener('mousemove', onThreeJsMouseMove, false);
         renderer.domElement.addEventListener('click', onThreeJsClick, false);
         renderer.domElement.addEventListener('mouseleave', onThreeJsMouseLeave, false);
@@ -309,12 +328,12 @@
                     // 자동 회전 시작
                     if (!currentIntersected.userData.autoRotateInterval) {
                         currentIntersected.userData.autoRotateInterval = setInterval(() => {
-                            currentIntersected.rotation.y += rotationSpeed * 5; // 마우스 오버 시 좀 더 빠르게 회전
+                            currentIntersected.rotation.y += rotationSpeed * 5; 
                         }, 1000 / 60); // 60fps
                     }
                 }
             } else {
-                // 아무것도 intersect 되지 않았을 때, 이전에 오버된 모델이 있다면 원래 상태로 되돌리기
+                // 아무것도 intersect 되지 않았을 때
                 if (currentIntersected) {
                     currentIntersected.scale.copy(currentIntersected.userData.originalScale);
                     if (currentIntersected.userData.autoRotateInterval) {
@@ -327,7 +346,7 @@
         }
 
         function onThreeJsMouseLeave() {
-            // 컨테이너에서 마우스가 벗어났을 때, 오버된 모델이 있다면 원래 상태로 되돌리기
+            // 컨테이너에서 마우스가 벗어났을 때
             if (currentIntersected) {
                 currentIntersected.scale.copy(currentIntersected.userData.originalScale);
                 if (currentIntersected.userData.autoRotateInterval) {
@@ -339,22 +358,27 @@
         }
 
         function onThreeJsClick(event) {
-            // 마우스 오버 시 사용했던 currentIntersected 객체 활용
             if (currentIntersected && currentIntersected.userData.modelVideo) {
                 const modelVideoPath = currentIntersected.userData.modelVideo;
                 console.log(`모델 ${currentIntersected.userData.modelName} 클릭! 비디오: ${modelVideoPath}`);
                 
-                // 비디오 소스 변경
-                videoSource.src = modelVideoPath;
-                myVideo.load(); // 비디오 다시 로드
-                myVideo.play().catch(e => console.error("비디오 재생 실패:", e));
+                // 1. **반복 및 음소거 해제** (소리 재생 및 끝까지 재생을 위함)
+                myVideo.loop = false;
+                myVideo.muted = false; 
 
-                // 일정 시간 후 기본 비디오로 돌아오기
-                setTimeout(() => {
-                    videoSource.src = BASE_VIDEO_PATH;
-                    myVideo.load();
-                    myVideo.play().catch(e => console.error("비디오 재생 실패:", e));
-                }, VIDEO_RESET_DELAY);
+                // 2. 비디오 소스 변경
+                videoSource.src = modelVideoPath;
+                myVideo.load(); 
+
+                // 3. 비디오 재생 시도 (사용자 클릭 후이므로 소리 재생이 가능함)
+                myVideo.play().catch(e => {
+                    console.error("클릭 후 비디오 재생 실패 (오디오 정책 문제일 수 있음):", e);
+                    // 혹시 모를 대비: 음소거로라도 재생 시도
+                    myVideo.muted = true;
+                    myVideo.play().catch(e2 => console.error("음소거 재생도 실패:", e2));
+                });
+                
+                // **주의: 비디오가 끝까지 재생되면 A 섹션의 'ended' 리스너가 base.mp4로 자동 전환합니다.**
             }
         }
 
@@ -368,7 +392,7 @@
 
         animate();
 
-        // 7. 창 크기 변경 시 화면 비율 유지 (웹캠/3D 뷰어 모두 대응)
+        // 7. 창 크기 변경 시 화면 비율 유지 
         window.addEventListener('resize', () => {
             // 3D 뷰어 리사이징
             camera.aspect = threeJsContainer.clientWidth / threeJsContainer.clientHeight;
