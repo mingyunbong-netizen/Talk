@@ -41,6 +41,17 @@
             align-items: center;
             overflow: hidden;
             background-color: #f0f0f0;
+            position: relative; /* 자식 요소의 위치 지정을 위해 */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* 반응 애니메이션 */
+            border: 3px solid transparent; /* 기본 테두리 */
+        }
+
+        /* base.mp4 마우스 오버 시 반응 */
+        .left-panel:hover {
+            transform: scale(1.02); /* 살짝 확대 */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* 그림자 강화 */
+            border: 3px solid #007bff; /* 파란색 테두리 */
+            cursor: pointer; /* 클릭 가능한 커서 */
         }
 
         /* 오른쪽 패널: 웹캠 피드 (500px x 500px 고정) */
@@ -103,7 +114,7 @@
 
     <div class="top-comparison-section">
         <div class="comparison-container">
-            <div class="left-panel">
+            <div class="left-panel" id="left-video-panel">
                 <video id="my-video" autoplay playsinline>
                     <source id="video-source" src="base.mp4" type="video/mp4">
                     죄송합니다. 귀하의 브라우저는 비디오 태그를 지원하지 않습니다.
@@ -139,6 +150,7 @@
         const loadingMessage = document.getElementById('loading-message');
         const myVideo = document.getElementById('my-video'); // 왼쪽 영상 요소
         const videoSource = document.getElementById('video-source'); // 비디오 소스 요소
+        const leftVideoPanel = document.getElementById('left-video-panel'); // 왼쪽 패널 요소
 
         // 1. 기본 비디오 설정 (음소거 및 반복)
         if (myVideo) {
@@ -152,7 +164,7 @@
             });
         }
         
-        // 2. 비디오 종료 시 base.mp4로 돌아가는 리스너 추가 (가장 중요한 변경)
+        // 2. 비디오 종료 시 base.mp4로 돌아가는 리스너 추가 
         myVideo.addEventListener('ended', () => {
             // 현재 재생 중인 비디오가 base.mp4가 아닐 경우에만 기본으로 복귀
             if (myVideo.currentSrc && myVideo.currentSrc.indexOf(BASE_VIDEO_PATH) === -1) {
@@ -172,7 +184,34 @@
             myVideo.play().catch(e => console.error("기본 비디오 재생 실패:", e));
         }
 
-        // 3. 웹캠 접근 요청 함수
+        // 3. base.mp4 클릭 이벤트 리스너 추가
+        leftVideoPanel.addEventListener('click', () => {
+            // 현재 base.mp4가 재생 중일 때만 hi.mp4로 전환
+            // currentSrc는 절대경로로 나오기 때문에 BASE_VIDEO_PATH가 현재 URL을 포함하는지 확인
+            const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
+            if (currentVideoName === BASE_VIDEO_PATH) {
+                playSpecificVideo('hi.mp4');
+            }
+        });
+
+        // 특정 비디오를 재생하는 함수 (모델 클릭 및 base.mp4 클릭 시 공통 사용)
+        function playSpecificVideo(videoPath) {
+            myVideo.loop = false; // 일회성 재생
+            myVideo.muted = false; // 소리 재생 시도
+
+            videoSource.src = videoPath;
+            myVideo.load();
+
+            myVideo.play().catch(e => {
+                console.error(`비디오 재생 실패 (${videoPath}):`, e);
+                // 혹시 모를 대비: 음소거로라도 재생 시도
+                myVideo.muted = true;
+                myVideo.play().catch(e2 => console.error("음소거 재생도 실패:", e2));
+            });
+        }
+
+
+        // 4. 웹캠 접근 요청 함수
         async function startWebcam() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -359,26 +398,7 @@
 
         function onThreeJsClick(event) {
             if (currentIntersected && currentIntersected.userData.modelVideo) {
-                const modelVideoPath = currentIntersected.userData.modelVideo;
-                console.log(`모델 ${currentIntersected.userData.modelName} 클릭! 비디오: ${modelVideoPath}`);
-                
-                // 1. **반복 및 음소거 해제** (소리 재생 및 끝까지 재생을 위함)
-                myVideo.loop = false;
-                myVideo.muted = false; 
-
-                // 2. 비디오 소스 변경
-                videoSource.src = modelVideoPath;
-                myVideo.load(); 
-
-                // 3. 비디오 재생 시도 (사용자 클릭 후이므로 소리 재생이 가능함)
-                myVideo.play().catch(e => {
-                    console.error("클릭 후 비디오 재생 실패 (오디오 정책 문제일 수 있음):", e);
-                    // 혹시 모를 대비: 음소거로라도 재생 시도
-                    myVideo.muted = true;
-                    myVideo.play().catch(e2 => console.error("음소거 재생도 실패:", e2));
-                });
-                
-                // **주의: 비디오가 끝까지 재생되면 A 섹션의 'ended' 리스너가 base.mp4로 자동 전환합니다.**
+                playSpecificVideo(currentIntersected.userData.modelVideo);
             }
         }
 
