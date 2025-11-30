@@ -41,17 +41,16 @@
             align-items: center;
             overflow: hidden;
             background-color: #f0f0f0;
-            position: relative; /* 자식 요소의 위치 지정을 위해 */
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* 반응 애니메이션 */
-            border: 3px solid transparent; /* 기본 테두리 */
+            position: relative; 
+            transition: transform 0.2s ease-in-out; /* 반응 애니메이션 (그림자/테두리 전환 효과 제거) */
+            /* 기존의 기본 테두리 관련 설정 제거 */
         }
 
-        /* base.mp4 마우스 오버 시 반응 */
+        /* 🌟🌟🌟 base.mp4 마우스 오버 시 반응 (크기 확대만 남김) 🌟🌟🌟 */
         .left-panel:hover {
             transform: scale(1.02); /* 살짝 확대 */
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* 그림자 강화 */
-            border: 3px solid #007bff; /* 파란색 테두리 */
             cursor: pointer; /* 클릭 가능한 커서 */
+            /* border 및 box-shadow 속성 제거 */
         }
 
         /* 오른쪽 패널: 웹캠 피드 (500px x 500px 고정) */
@@ -88,7 +87,7 @@
             color: white;
             font-size: 1.2em;
             text-align: center;
-            position: absolute; /* right-panel 내에서 상대적 위치 지정 */
+            position: absolute; 
             width: 500px;
         }
 
@@ -151,6 +150,8 @@
         const myVideo = document.getElementById('my-video'); // 왼쪽 영상 요소
         const videoSource = document.getElementById('video-source'); // 비디오 소스 요소
         const leftVideoPanel = document.getElementById('left-video-panel'); // 왼쪽 패널 요소
+        const BASE_VIDEO_PATH = "base.mp4"; // 기본 비디오 경로 (Three.js 섹션과 공유)
+
 
         // 1. 기본 비디오 설정 (음소거 및 반복)
         if (myVideo) {
@@ -167,7 +168,8 @@
         // 2. 비디오 종료 시 base.mp4로 돌아가는 리스너 추가 
         myVideo.addEventListener('ended', () => {
             // 현재 재생 중인 비디오가 base.mp4가 아닐 경우에만 기본으로 복귀
-            if (myVideo.currentSrc && myVideo.currentSrc.indexOf(BASE_VIDEO_PATH) === -1) {
+            const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
+            if (currentVideoName !== BASE_VIDEO_PATH) {
                 switchToBaseVideo();
             }
         });
@@ -187,7 +189,6 @@
         // 3. base.mp4 클릭 이벤트 리스너 추가
         leftVideoPanel.addEventListener('click', () => {
             // 현재 base.mp4가 재생 중일 때만 hi.mp4로 전환
-            // currentSrc는 절대경로로 나오기 때문에 BASE_VIDEO_PATH가 현재 URL을 포함하는지 확인
             const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
             if (currentVideoName === BASE_VIDEO_PATH) {
                 playSpecificVideo('hi.mp4');
@@ -245,7 +246,7 @@
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
-        // 🌟🌟🌟 모델 크기 및 배치 설정 (요청에 따라 비디오 경로 업데이트 완료) 🌟🌟🌟
+        // 🌟🌟🌟 모델 크기 및 배치 설정 🌟🌟🌟
         const modelsToLoad = [
             { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },       
             { name: 'bag.glb', scale: 7, video: 'bag.mp4' },
@@ -261,7 +262,7 @@
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 3.0;
         const HOVER_SCALE_FACTOR = 1.2; // 마우스 오버 시 확대 비율
-        const BASE_VIDEO_PATH = "base.mp4"; // 기본 비디오 경로
+        // const BASE_VIDEO_PATH = "base.mp4"; // A 섹션에서 정의됨
         // 🌟🌟🌟 ------------------------------------ 🌟🌟🌟
 
 
@@ -326,7 +327,7 @@
         });
 
 
-        // 5. 마우스 이벤트 리스너 추가 (클릭 핸들러 수정됨)
+        // 5. 마우스 이벤트 리스너 추가 
         renderer.domElement.addEventListener('mousemove', onThreeJsMouseMove, false);
         renderer.domElement.addEventListener('click', onThreeJsClick, false);
         renderer.domElement.addEventListener('mouseleave', onThreeJsMouseLeave, false);
