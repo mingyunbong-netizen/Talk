@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>영상 비교 및 3D 모델 뷰어</title>
+    <title>영상 비교 및 3D 모델 뷰어 (음성 인식 기능 포함)</title>
     <style>
         body {
             margin: 0;
@@ -14,10 +14,23 @@
         .top-comparison-section {
             width: 100%;
             display: flex;
-            justify-content: center;
-            padding: 30px 0;
+            flex-direction: column; /* 상태 메시지를 위에 배치하기 위해 변경 */
+            align-items: center;
+            padding: 30px 0 10px 0; /* 상단 여백 조정 */
             box-sizing: border-box;
             background-color: #f7f7f7;
+        }
+        
+        #voice-status-display {
+            width: 1000px;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: #1a1a1a;
+            background-color: #e0f7fa; /* 밝은 배경 */
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .comparison-container {
@@ -36,7 +49,7 @@
             align-items: center;
             overflow: hidden;
             background-color: #f0f0f0;
-            position: relative; 
+            position: relative;
             transition: transform 0.2s ease-in-out;
         }
 
@@ -76,13 +89,29 @@
             color: white;
             font-size: 1.2em;
             text-align: center;
-            position: absolute; 
+            position: absolute;
             width: 500px;
         }
+        
+        /* 웹캠 영역에 음성 인식 상태 표시를 위한 스타일 */
+        .speech-status-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: yellow;
+            font-size: 1em;
+            text-align: center;
+            box-sizing: border-box;
+            display: none; /* 초기에는 숨김 */
+        }
+
 
         #threejs-container {
             width: 100vw;
-            height: 70vh; 
+            height: 70vh;
             overflow: hidden;
             cursor: grab;
         }
@@ -95,6 +124,8 @@
 <body>
 
     <div class="top-comparison-section">
+        <div id="voice-status-display">마이크 및 웹캠 접근 권한을 허용해 주세요.</div>
+
         <div class="comparison-container">
             <div class="left-panel" id="left-video-panel">
                 <video id="my-video" autoplay playsinline>
@@ -105,9 +136,11 @@
 
             <div class="right-panel">
                 <div id="loading-message" class="loading-text">
-                    웹캠 접근을 요청 중입니다... 허용해 주세요.
+                    웹캠 및 마이크 접근을 요청 중입니다...
                 </div>
                 <video id="webcam-feed" autoplay playsinline style="display: none;"></video>
+                
+                <div id="speech-command-overlay" class="speech-status-overlay"></div>
             </div>
         </div>
     </div>
@@ -125,11 +158,17 @@
     </script>
 
     <script type="module">
+        // =================================================================
+        // 1. DOM 및 비디오 제어 로직 (기존 코드 유지)
+        // =================================================================
         const videoElement = document.getElementById('webcam-feed');
         const loadingMessage = document.getElementById('loading-message');
         const myVideo = document.getElementById('my-video');
         const videoSource = document.getElementById('video-source');
         const leftVideoPanel = document.getElementById('left-video-panel');
+        const voiceStatusDisplay = document.getElementById('voice-status-display');
+        const speechCommandOverlay = document.getElementById('speech-command-overlay');
+
         const BASE_VIDEO_PATH = "base.mp4";
 
 
@@ -156,7 +195,7 @@
             myVideo.load();
             
             myVideo.loop = true;
-            myVideo.muted = true; 
+            myVideo.muted = true;
             myVideo.play().catch(e => console.error("기본 비디오 재생 실패:", e));
         }
 
@@ -180,23 +219,148 @@
                 myVideo.play().catch(e2 => console.error("음소거 재생도 실패:", e2));
             });
         }
+        
+        // =================================================================
+        // 2. 음성 인식 및 통합 로직 (추가된 기능)
+        // =================================================================
 
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        const speechRecognition = window.SpeechRecognition ? new SpeechRecognition() : null;
+        let isListening = false;
+        let isMediaReady = false;
+        let modelKeywordMap = {}; // 모델 이름/비디오 경로를 저장할 맵
+        
+        // 모델 정보 정의
+        const modelsToLoad = [
+            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },
+            { name: 'bag.glb', scale: 7, video: 'bag.mp4' },
+            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4' },
+            { name: 'book.glb', scale: 10, video: 'book.mp4' },
+            { name: 'close.glb', scale: 5, video: 'clothes.mp4' },
+            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4' },
+            { name: 'guard.glb', scale: 10, video: 'brace.mp4' },
+            { name: 'persimmon.glb', scale: 20, video: 'food.mp4' },
+        ];
+
+        // 음성 인식 키워드 맵 생성
+        modelsToLoad.forEach(model => {
+            let keyword;
+            switch (model.name.split('.')[0]) { 
+                case 'shoes': keyword = '신발'; break;
+                case 'bag': keyword = '가방'; break;
+                case 'ball': keyword = '공'; break;
+                case 'book': keyword = '책'; break;
+                case 'close': keyword = '옷'; break;
+                case 'glasses': keyword = '안경'; break;
+                case 'guard': keyword = '보호대'; break;
+                case 'persimmon': keyword = '감'; break;
+                default: keyword = null;
+            }
+            if (keyword) {
+                modelKeywordMap[keyword] = model.video;
+            }
+        });
+        modelKeywordMap['기본'] = BASE_VIDEO_PATH; // 기본 비디오로 돌아가는 명령 추가
+
+
+        function startSpeechRecognition() {
+            if (!speechRecognition) {
+                voiceStatusDisplay.innerText = "❌ 음성 인식이 지원되지 않는 브라우저입니다.";
+                return;
+            }
+
+            speechRecognition.continuous = true;
+            speechRecognition.interimResults = false;
+            speechRecognition.lang = 'ko-KR';
+
+            speechRecognition.onstart = function() {
+                isListening = true;
+                voiceStatusDisplay.innerText = '🟢 음성 인식 활성화됨. "신발", "가방", "기본" 등을 말해보세요.';
+                speechCommandOverlay.style.display = 'block';
+                speechCommandOverlay.innerText = '말씀하세요...';
+            };
+
+            speechRecognition.onresult = function(event) {
+                const result = event.results[event.results.length - 1]; 
+                const transcript = result[0].transcript.trim();
+                
+                let matchedVideoPath = null;
+                for (const keyword in modelKeywordMap) {
+                    if (transcript.includes(keyword)) {
+                        matchedVideoPath = modelKeywordMap[keyword];
+                        break;
+                    }
+                }
+
+                if (matchedVideoPath) {
+                    speechCommandOverlay.style.color = 'lime';
+                    speechCommandOverlay.innerText = `[인식: ${transcript}] -> 영상 재생 중...`;
+                    
+                    if (matchedVideoPath === BASE_VIDEO_PATH) {
+                        switchToBaseVideo();
+                    } else {
+                        playSpecificVideo(matchedVideoPath);
+                    }
+                } else {
+                    speechCommandOverlay.style.color = 'orange';
+                    speechCommandOverlay.innerText = `[인식: ${transcript}] -> 일치하는 명령 없음.`;
+                }
+            };
+
+            speechRecognition.onerror = function(event) {
+                voiceStatusDisplay.innerText = `🚨 음성 인식 오류 발생: ${event.error}`;
+                speechCommandOverlay.style.display = 'block';
+                speechCommandOverlay.style.color = '#ff6b6b';
+                speechCommandOverlay.innerText = `오류: ${event.error}`;
+                isListening = false;
+            };
+
+            speechRecognition.onend = function() {
+                isListening = false;
+                if (isMediaReady) { 
+                    setTimeout(() => {
+                        speechRecognition.start();
+                    }, 500);
+                }
+            };
+
+            try {
+                speechRecognition.start();
+            } catch (e) {
+                // 이미 실행 중일 때 발생하는 오류 무시
+            }
+        }
+        
+        // 💡 웹캠 시작 함수를 마이크 접근을 포함하도록 수정
         async function startWebcam() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // video: 웹캠, audio: 마이크 (음성 인식을 위해 필요)
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); 
+                
                 loadingMessage.style.display = 'none';
                 videoElement.style.display = 'block';
                 videoElement.srcObject = stream;
+                isMediaReady = true;
+
+                voiceStatusDisplay.innerText = '✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다.';
+
+                // 접근 성공 후 음성 인식 시작
+                startSpeechRecognition(); 
+
             } catch (err) {
-                console.error("웹캠 접근 권한 거부 또는 오류 발생:", err);
-                loadingMessage.innerText = "웹캠 접근 권한이 거부되었습니다.";
+                console.error("웹캠/마이크 접근 권한 거부 또는 오류 발생:", err);
+                loadingMessage.innerText = "웹캠 또는 마이크 접근 권한이 거부되었습니다. 모두 허용해 주세요.";
                 loadingMessage.style.color = '#ff6b6b';
+                voiceStatusDisplay.innerText = '❌ 웹캠/마이크 접근 권한이 필요합니다.';
             }
         }
 
-        window.onload = startWebcam;
+        window.onload = startWebcam; // 웹사이트 로드 시 통합 시작 함수 실행
 
-
+        // =================================================================
+        // 3. Three.js 3D 뷰어 로직 (기존 코드 유지)
+        // =================================================================
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -204,36 +368,27 @@
         const threeJsContainer = document.getElementById('threejs-container');
 
         let intersectedObject = null;
-        let originalScale = new THREE.Vector3(); 
-        let rotationSpeed = 0.005; 
+        let originalScale = new THREE.Vector3();
+        let rotationSpeed = 0.005;
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
-        const modelsToLoad = [
-            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },      
-            { name: 'bag.glb', scale: 7, video: 'bag.mp4' },
-            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4' },
-            { name: 'book.glb', scale: 10, video: 'book.mp4' },
-            { name: 'close.glb', scale: 5, video: 'clothes.mp4' },
-            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4' },
-            { name: 'guard.glb', scale: 10, video: 'brace.mp4' },      
-            { name: 'persimmon.glb', scale: 20, video: 'food.mp4' },   
-        ];
+        // modelsToLoad 배열은 2. 음성 인식 섹션 상단에서 정의되어 재사용됨.
 
-        const FIXED_POSITION_Y = -4.0; 
+        const FIXED_POSITION_Y = -4.0;
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 3.0;
         const HOVER_SCALE_FACTOR = 1.2;
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff); 
+        scene.background = new THREE.Color(0xffffff);
 
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
         camera.position.set(0, 0, 15);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
-        threeJsContainer.appendChild(renderer.domElement); 
+        threeJsContainer.appendChild(renderer.domElement);
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
@@ -244,9 +399,9 @@
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.target.set(0, FIXED_POSITION_Y, 0); 
+        controls.target.set(0, FIXED_POSITION_Y, 0);
         controls.enablePan = false;
-        controls.enableRotate = true; 
+        controls.enableRotate = true;
         controls.maxDistance = 20;
         controls.minDistance = 5;
 
@@ -266,8 +421,8 @@
 
                     model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
                     model.userData.modelName = modelInfo.name;
-                    model.userData.modelVideo = modelInfo.video; 
-                    model.userData.originalScale = model.scale.clone(); 
+                    model.userData.modelVideo = modelInfo.video;
+                    model.userData.originalScale = model.scale.clone();
 
                     scene.add(model);
                 },
@@ -313,7 +468,7 @@
 
                     if (!currentIntersected.userData.autoRotateInterval) {
                         currentIntersected.userData.autoRotateInterval = setInterval(() => {
-                            currentIntersected.rotation.y += rotationSpeed * 5; 
+                            currentIntersected.rotation.y += rotationSpeed * 5;
                         }, 1000 / 60);
                     }
                 }
