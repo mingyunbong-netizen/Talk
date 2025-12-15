@@ -28,9 +28,9 @@
         #homepage-logo {
             cursor: pointer;
             position: fixed; /* 고정 위치 유지 */
-            top: 28px;        /* 요청하신 값: 28px */
-            left: 110px;      /* 요청하신 값: 110px */
-            font-size: 40px;  /* 요청하신 값: 40px */
+            top: 28px;        /* 28px */
+            left: 110px;      /* 110px */
+            font-size: 40px;  /* 40px */
             font-weight: bold;
             font-family: 'BookkGothic', sans-serif;
             color: black;
@@ -58,13 +58,19 @@
         }
 
         /* ------------------------------------------- */
-        /* 로고 정보 박스 스타일 (조정됨) */
+        /* 로고 정보 박스 스타일 (최종 조정됨) */
         /* ------------------------------------------- */
         #logo-info-box {
             position: fixed;
-            top: 80px;         /* 상단 위치 조정 */
-            left: 110px; 
-            width: 350px;      /* 너비 조정 */
+            
+            /* ✅ 상단 위치 120px로 수정 */
+            top: 120px;         
+            
+            /* ✅ 수평 중앙 정렬을 위한 설정 */
+            left: 50%;          /* 화면 너비의 50% 지점에 왼쪽 모서리 배치 */
+            transform: translateX(-50%); /* 박스 너비의 50%만큼 왼쪽으로 이동 (정렬 완성) */
+            
+            width: 350px;      
             padding: 15px;
             background-color: rgba(255, 255, 255, 0.95); 
             color: #333;
