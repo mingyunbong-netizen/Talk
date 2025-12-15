@@ -23,24 +23,42 @@
         }
 
         /* ------------------------------------------- */
-        /* 로고 스타일 */
+        /* 로고 스타일 (수정됨) */
         /* ------------------------------------------- */
+        /* ✅ 수정된 부분 1: 폰트 크기 변경 효과 제거 */
         #homepage-logo {
             cursor: pointer;
             position: fixed; /* 고정 위치 유지 */
             top: 35px;
-            left: 110px;
-            font-size: 40px;
+            left: 60px;
+            font-size: 30px;
             font-weight: bold;
             font-family: 'BookkGothic', sans-serif;
             color: black;
             z-index: 100;
-            transition: font-size 0.3s ease;
+            /* transition: font-size 0.3s ease; // 제거 */
         }
-        #homepage-logo:hover {
-            font-size: 40px;
+
+        /* ✅ 새로 추가된 CSS: 좌우 진동 (목소리 떨림) 효과 */
+        @keyframes voice-tremor {
+            0% { transform: translateX(0px); }
+            10% { transform: translateX(-3px); }
+            20% { transform: translateX(3px); }
+            30% { transform: translateX(-2px); }
+            40% { transform: translateX(2px); }
+            50% { transform: translateX(-1.5px); }
+            60% { transform: translateX(1.5px); }
+            70% { transform: translateX(-1px); }
+            80% { transform: translateX(1px); }
+            90% { transform: translateX(-0.5px); }
+            100% { transform: translateX(0px); }
         }
-        
+
+        /* 애니메이션을 적용할 클래스 */
+        .trembling {
+            animation: voice-tremor 2s ease-out forwards; /* 2초 동안 진동 후 최종 상태(0px) 유지 */
+        }
+
         /* ✅ 새로 추가된 스타일: 로고 정보 박스 */
         #logo-info-box {
             position: fixed;
@@ -267,20 +285,43 @@
 
 
         // =================================================================
-        // 4. 로고 호버 이벤트 로직 (추가된 부분)
+        // 4. 로고 호버 이벤트 로직 (수정된 부분)
         // =================================================================
         const homepageLogo = document.getElementById('homepage-logo');
         const logoInfoBox = document.getElementById('logo-info-box');
 
         if (homepageLogo && logoInfoBox) {
+            let tremorTimeout;
+
             // 마우스 오버 시
             homepageLogo.addEventListener('mouseenter', () => {
+                // 1. 정보 박스 표시
                 logoInfoBox.style.opacity = '1';
                 logoInfoBox.style.visibility = 'visible';
+
+                // 2. 진동 효과 시작
+                // 기존 애니메이션이 있다면 제거하고 다시 시작 (재클릭 시)
+                homepageLogo.classList.remove('trembling');
+                
+                // DOM reflow/repaint를 위해 잠시 대기
+                void homepageLogo.offsetWidth; 
+                
+                homepageLogo.classList.add('trembling');
+
+                // 3. 2초 후 진동 효과 클래스 제거
+                clearTimeout(tremorTimeout);
+                tremorTimeout = setTimeout(() => {
+                    homepageLogo.classList.remove('trembling');
+                }, 2000); // CSS 애니메이션 시간과 일치 (2s)
             });
 
             // 마우스 이탈 시
             homepageLogo.addEventListener('mouseleave', () => {
+                // 1. 진동 효과 즉시 중지 및 클래스 제거
+                clearTimeout(tremorTimeout);
+                homepageLogo.classList.remove('trembling');
+
+                // 2. 정보 박스 숨김
                 logoInfoBox.style.opacity = '0';
                 // 투명화가 완료된 후 완전히 숨김 (transition 시간 고려)
                 setTimeout(() => {
@@ -555,7 +596,7 @@
 
         const scene = new THREE.Scene();
         // 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
-        scene.background = new THREE.Color(0xf5f5f5); 
+        scene.background = new THREE.Color(0xf5f5f5); 
 
         // 카메라 생성 시 컨테이너의 현재 크기를 사용
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
