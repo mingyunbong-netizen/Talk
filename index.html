@@ -490,13 +490,13 @@
         
         // modelsToLoad는 위에서 정의됨 (재사용)
 
-        // ✅ FIXED_POSITION_Y: 3D 모델의 실제 Y 위치 (기존 -2.0 유지)
-        const FIXED_POSITION_Y = -2.0; 
+        // 💡 수정 지점 1: FIXED_POSITION_Y를 -2.0에서 -20.0으로 10배 낮춥니다.
+        const FIXED_POSITION_Y = -20.0; 
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 5.0;  
         const HOVER_SCALE_FACTOR = 1.2;
         
-        // 💡 수정 지점: CAMERA_POSITION_Y를 4.0으로 변경하여 모델을 훨씬 더 아래로 이동
+        // CAMERA_POSITION_Y는 요청에 따라 이전 값인 4.0을 유지합니다.
         const CAMERA_POSITION_Y = 4.0; 
         
         const scene = new THREE.Scene();
@@ -505,8 +505,8 @@
 
         // 카메라 생성 시 컨테이너의 현재 크기를 사용
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
-        // 💡 수정 지점: 새로운 CAMERA_POSITION_Y 적용
-        camera.position.set(0, CAMERA_POSITION_Y, 15); // 카메라 위치를 위로 이동 (모델은 상대적으로 아래로 내려옴)
+        // CAMERA_POSITION_Y 적용
+        camera.position.set(0, CAMERA_POSITION_Y, 15); 
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
@@ -521,7 +521,7 @@
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        // controls.target을 모델의 Y 위치와 동기화하여 카메라 조작 중심을 맞춤
+        // 💡 수정 지점 2: controls.target을 새 FIXED_POSITION_Y에 맞춥니다.
         controls.target.set(0, FIXED_POSITION_Y, 0);	
         controls.enablePan = false;
         controls.enableRotate = true;
@@ -539,7 +539,7 @@
                     const model = gltf.scene;
 
                     model.position.x = startX + (index * MODEL_SPACING_X);
-                    // model.position.y를 FIXED_POSITION_Y에 맞춤
+                    // model.position.y를 FIXED_POSITION_Y에 맞춤 (모델이 아래로 이동)
                     model.position.y = FIXED_POSITION_Y;
                     model.position.z = FIXED_POSITION_Z;
 
