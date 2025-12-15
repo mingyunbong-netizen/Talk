@@ -307,16 +307,16 @@
         // 누적된 음성 기록을 저장하는 변수
         let accumulatedTranscript = '대화 메모장\n';	
 
-        // 모델 정보 정의 (크기/scale 값 재조정)
+        // 모델 정보 정의 (크기/scale 값 재조정 - 축소)
         const modelsToLoad = [
-            { name: 'shoes.glb', scale: 35, video: 'shoes.mp4', keyword: '신발' },
-            { name: 'bag.glb', scale: 25, video: 'bag.mp4', keyword: '가방' },
-            { name: 'ball.glb', scale: 20, video: 'Stretching.mp4', keyword: '공' },
-            { name: 'book.glb', scale: 35, video: 'book.mp4', keyword: '책' },
-            { name: 'close.glb', scale: 20, video: 'clothes.mp4', keyword: '옷' },
-            { name: 'glasses.glb', scale: 60, video: 'glasses.mp4', keyword: '안경' },
-            { name: 'guard.glb', scale: 35, video: 'brace.mp4', keyword: '보호대' },
-            { name: 'persimmon.glb', scale: 60, video: 'food.mp4', keyword: '감' },
+            { name: 'shoes.glb', scale: 20, video: 'shoes.mp4', keyword: '신발' },
+            { name: 'bag.glb', scale: 15, video: 'bag.mp4', keyword: '가방' },
+            { name: 'ball.glb', scale: 12, video: 'Stretching.mp4', keyword: '공' },
+            { name: 'book.glb', scale: 20, video: 'book.mp4', keyword: '책' },
+            { name: 'close.glb', scale: 12, video: 'clothes.mp4', keyword: '옷' },
+            { name: 'glasses.glb', scale: 35, video: 'glasses.mp4', keyword: '안경' },
+            { name: 'guard.glb', scale: 20, video: 'brace.mp4', keyword: '보호대' },
+            { name: 'persimmon.glb', scale: 35, video: 'food.mp4', keyword: '감' },
         ];
 
         // 음성 인식 키워드 맵을 modelsToLoad를 기반으로 생성
@@ -490,10 +490,10 @@
         
         // modelsToLoad는 위에서 정의됨 (재사용)
 
-        // ✅ 수정: Y축을 -1.0으로 내려 중앙보다 아래에 위치하도록 조정
-        const FIXED_POSITION_Y = -1.0; 
+        // ✅ 수정: Y축을 -2.0으로 더 낮춰 화면 중앙보다 아래에 위치
+        const FIXED_POSITION_Y = -2.0; 
         const FIXED_POSITION_Z = 0.0;
-        // ✅ 수정: 모델 간 X축 간격을 5.0으로 넓힘
+        // 모델 간 X축 간격 유지
         const MODEL_SPACING_X = 5.0;  
         const HOVER_SCALE_FACTOR = 1.2;
 
