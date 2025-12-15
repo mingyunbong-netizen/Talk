@@ -431,7 +431,7 @@
                                 console.warn("음성 인식 재시작 오류:", e);
                             }
                         }
-                    }, 100); 
+                    }, 100);	
                 }
             };
 
@@ -490,19 +490,23 @@
         
         // modelsToLoad는 위에서 정의됨 (재사용)
 
-        // ✅ FIXED_POSITION_Y를 -2.0으로 설정하여 모델 높이 조정
+        // ✅ FIXED_POSITION_Y를 -2.0으로 설정하여 모델 높이 조정 (모델의 실제 Y 위치)
         const FIXED_POSITION_Y = -2.0; 
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 5.0;  
         const HOVER_SCALE_FACTOR = 1.2;
-
+        
+        // 💡 수정 지점 1: 3D 모델이 화면 내에서 아래로 내려가도록 카메라의 Y축 위치를 조정 (예: 5)
+        const CAMERA_POSITION_Y = 5.0; // 이 값을 증가시킬수록 모델이 뷰포트 상에서 더 아래로 내려갑니다.
+        
         const scene = new THREE.Scene();
         // 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
-        scene.background = new THREE.Color(0xf5f5f5); 
+        scene.background = new THREE.Color(0xf5f5f5); 
 
         // 카메라 생성 시 컨테이너의 현재 크기를 사용
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
-        camera.position.set(0, 0, 15);
+        // 💡 수정 지점 2: 새로운 CAMERA_POSITION_Y 적용
+        camera.position.set(0, CAMERA_POSITION_Y, 15); // 카메라 위치를 위로 이동
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
