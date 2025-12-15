@@ -5,20 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>영상 비교 및 3D 모델 뷰어 (음성 인식 기록 박스)</title>
     <style>
-        body {
+        /* =================================================== */
+        /* ✅ 스크롤 제거 및 전체 화면 높이 사용 설정 */
+        /* =================================================== */
+        html, body {
             margin: 0;
+            padding: 0;
+            height: 100%; /* 뷰포트 높이 전체 사용 */
             font-family: Arial, sans-serif;
-            overflow-x: hidden;
-            background-color: #f7f7f7; /* 배경색 통일 */
+            overflow: hidden; /* 전체 페이지 스크롤 제거 */
+            background-color: #f7f7f7;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column; /* 세로 방향으로 정렬 */
         }
 
         /* ------------------------------------------- */
-        /* 추가된 로고 스타일 */
+        /* 로고 스타일 */
         /* ------------------------------------------- */
         #homepage-logo {
             cursor: pointer;
-            position: fixed;
-            top: 35px; /* 상단 여백 조정 */
+            position: fixed; /* 고정 위치 유지 */
+            top: 35px;
             left: 60px;
             font-size: 30px;
             font-weight: bold;
@@ -32,14 +42,19 @@
         }
         /* ------------------------------------------- */
 
+        /* =================================================== */
+        /* 상단 비교 섹션: 최소 높이만 차지 (shrink: 0) */
+        /* =================================================== */
         .top-comparison-section {
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 30px 0 10px 0;
+            padding-top: 30px; 
+            padding-bottom: 10px;
             box-sizing: border-box;
             background-color: #f7f7f7;
+            flex-shrink: 0; /* 높이가 줄어들지 않게 고정 */
         }
         
         #voice-status-display {
@@ -52,13 +67,13 @@
             background-color: #000000;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            min-height: 40px; /* 최소 높이 확보 */
+            min-height: 40px;
         }
 
         .comparison-container {
             display: flex;
             width: 1000px;
-            height: 500px;
+            height: 500px; /* 고정된 높이 */
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
@@ -90,7 +105,7 @@
             align-items: center;
             box-sizing: border-box;
             background-color: #333333;
-            position: relative; /* 자식인 overlay의 기준점이 됨 */
+            position: relative;
         }
 
         #my-video {
@@ -116,13 +131,13 @@
             width: 500px;
         }
         
-        /* ✅ 수정 1: right-panel 내부의 절대 위치로 변경 */
+        /* 음성 인식 오버레이 */
         #speech-command-overlay {
             position: absolute;
             top: 10px;
-            right: -300px; /* right-panel 내부 오른쪽 상단 */
-            width: 200px; /* 폭 조정 */
-            height: 480px;
+            right: -300px; 
+            width: 200px;
+            height: 480px; /* 500px - 20px padding */
             padding: 10px;
             background: rgba(0, 0, 0, 0.65);
             color: white;
@@ -131,7 +146,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             box-sizing: border-box;
             overflow-y: auto;
-            text-align: left; /* 기록은 왼쪽 정렬이 자연스러움 */
+            text-align: left;
             white-space: pre-wrap;
             z-index: 10;
             display: none;
@@ -148,10 +163,13 @@
         }
 
 
+        /* =================================================== */
+        /* 하단 3D 뷰어: 남은 모든 공간을 차지 (grow: 1) */
+        /* =================================================== */
         #threejs-container {
             width: 100vw;
-            height: 70vh;
-            overflow: hidden;
+            flex-grow: 1; /* 남은 공간을 모두 채움 */
+            overflow: hidden; 
             cursor: grab;
         }
 
@@ -297,7 +315,7 @@
             { name: 'persimmon.glb', scale: 20, video: 'food.mp4', keyword: '감' },
         ];
 
-        // ✅ 개선 1: 음성 인식 키워드 맵을 modelsToLoad를 기반으로 생성
+        // 음성 인식 키워드 맵을 modelsToLoad를 기반으로 생성
         const modelKeywordMap = {};
         modelsToLoad.forEach(model => {
             if (model.keyword) {
@@ -306,7 +324,7 @@
         });
         modelKeywordMap['기본'] = BASE_VIDEO_PATH;	
 
-        // ✅ 개선 2: 사용자 안내를 위한 키워드 문자열 생성
+        // 사용자 안내를 위한 키워드 문자열 생성
         const keywords = Object.keys(modelKeywordMap).filter(k => k !== '기본').join(', ');
 
         function startSpeechRecognition() {
@@ -321,7 +339,7 @@
 
             speechRecognition.onstart = function() {
                 isListening = true;
-                // ✅ 개선 3: 동적으로 생성한 키워드 목록을 안내 메시지에 포함
+                // 동적으로 생성한 키워드 목록을 안내 메시지에 포함
                 voiceStatusDisplay.innerText = `💬 대화를 걸어주세요! "${keywords}" 등을 말해보세요.`;
                 speechCommandOverlay.style.display = 'block';
                 // HTML로 누적 기록 초기 표시
@@ -398,7 +416,7 @@
                 // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;	
                 
-                // ✅ 개선 4: 약간의 딜레이 후 연속 인식 재시작 로직 강화 (비디오 재생 중에도 마이크 유지)
+                // 약간의 딜레이 후 연속 인식 재시작 로직 강화 (비디오 재생 중에도 마이크 유지)
                 if (isMediaReady) {	
                     // onend 후 바로 start() 호출 시 브라우저에 따라 오류가 발생할 수 있어 딜레이 추가
                     setTimeout(() => {
@@ -409,7 +427,7 @@
                                 console.warn("음성 인식 재시작 오류:", e);
                             }
                         }
-                    }, 100); 
+                    }, 100); 
                 }
             };
 
@@ -436,7 +454,7 @@
                 
                 isMediaReady = true;
 
-                // ✅ 개선 3 반영: 동적으로 생성한 키워드 목록을 안내 메시지에 포함
+                // 동적으로 생성한 키워드 목록을 안내 메시지에 포함
                 voiceStatusDisplay.innerText = `✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다: "${keywords}"`;
 
                 // 접근 성공 후 음성 인식 시작 (마이크 소리는 SpeechRecognition이 사용)
@@ -474,9 +492,10 @@
         const HOVER_SCALE_FACTOR = 1.2;
 
         const scene = new THREE.Scene();
-        // ✅ 개선 5: 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
-        scene.background = new THREE.Color(0xf5f5f5); 
+        // 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
+        scene.background = new THREE.Color(0xf5f5f5); 
 
+        // 카메라 생성 시 컨테이너의 현재 크기를 사용
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
         camera.position.set(0, 0, 15);
 
@@ -587,23 +606,23 @@
             requestAnimationFrame(animate);
             controls.update();
 
-            // ✅ 개선 6: 마우스 오버된 모델만 회전시키는 로직을 animate 함수 내에서 처리하여 성능 개선
-            if (currentIntersected) {
-                currentIntersected.rotation.y += rotationSpeed * 5;
-            } else {
-                // 마우스 오버되지 않은 모든 모델은 느리게 자동 회전 (선택 사항)
-                scene.children.forEach(object => {
-                    if (object.isGroup || object.isMesh) { // 로드된 3D 모델(Group)만 처리
+            // 마우스 오버된 모델만 빠르게 회전, 나머지는 느리게 자동 회전
+            scene.children.forEach(object => {
+                if (object.isGroup || object.isMesh) {
+                    if (object === currentIntersected) {
+                        object.rotation.y += rotationSpeed * 5;
+                    } else {
                         object.rotation.y += rotationSpeed;
                     }
-                });
-            }
+                }
+            });
 
             renderer.render(scene, camera);
         }
 
         animate();
 
+        // 윈도우 크기 변경 시 3D 뷰어 크기 조정 (Flexbox 높이에 맞춤)
         window.addEventListener('resize', () => {
             camera.aspect = threeJsContainer.clientWidth / threeJsContainer.clientHeight;
             camera.updateProjectionMatrix();
