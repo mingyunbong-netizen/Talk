@@ -88,11 +88,13 @@
             background-color: #f0f0f0;
             position: relative;
             transition: transform 0.2s ease-in-out;
+            z-index: 1; /* ✅ 추가: 기본 z-index 설정 */
         }
 
         .left-panel:hover {
             transform: scale(1.02);
             cursor: pointer;
+            z-index: 10; /* ✅ 수정: 호버 시 z-index를 높여 앞으로 나오게 함 */
         }
 
         .right-panel {
@@ -427,7 +429,7 @@
                                 console.warn("음성 인식 재시작 오류:", e);
                             }
                         }
-                    }, 100); 
+                    }, 100);	
                 }
             };
 
@@ -493,7 +495,7 @@
 
         const scene = new THREE.Scene();
         // 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
-        scene.background = new THREE.Color(0xf5f5f5); 
+        scene.background = new THREE.Color(0xf5f5f5); 
 
         // 카메라 생성 시 컨테이너의 현재 크기를 사용
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
