@@ -28,8 +28,8 @@
         #homepage-logo {
             cursor: pointer;
             position: fixed; /* 고정 위치 유지 */
-            top: 28px;        /* 28px */
-            left: 110px;      /* 110px */
+            top: 28px;      /* 28px */
+            left: 110px;    /* 110px */
             font-size: 40px;  /* 40px */
             font-weight: bold;
             font-family: 'BookkGothic', sans-serif;
@@ -64,7 +64,7 @@
             position: fixed;
             
             /* 높이 수정: 120px */
-            top: 120px;         
+            top: 120px;     
             
             /* ✅ 로고 중앙 정렬을 위한 수정 */
             /* 로고 시작점 (110px) + 로고 너비 절반 (약 140px) = 250px */
@@ -73,7 +73,7 @@
             /* 박스 너비(350px)의 절반(175px)만큼 왼쪽으로 이동하여 중앙 정렬 완성 */
             transform: translateX(-175px); 
             
-            width: 350px;      
+            width: 350px;     
             padding: 15px;
             background-color: rgba(255, 255, 255, 0.95); 
             color: #333;
@@ -418,14 +418,15 @@
 
         // 모델 정보 정의
         const modelsToLoad = [
-            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4', keyword: '신발' },
-            { name: 'bag.glb', scale: 7, video: 'bag.mp4', keyword: '가방' },
-            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4', keyword: '공' },
-            { name: 'book.glb', scale: 10, video: 'book.mp4', keyword: '책' },
-            { name: 'close.glb', scale: 5, video: 'clothes.mp4', keyword: '옷' },
-            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4', keyword: '안경' },
-            { name: 'guard.glb', scale: 10, video: 'brace.mp4', keyword: '보호대' },
-            { name: 'persimmon.glb', scale: 20, video: 'food.mp4', keyword: '감' },
+            // ✅ 모델 스케일 값을 약 2~3배 증가시켜 더 크게 보이도록 조정했습니다.
+            { name: 'shoes.glb', scale: 25, video: 'shoes.mp4', keyword: '신발' },
+            { name: 'bag.glb', scale: 18, video: 'bag.mp4', keyword: '가방' },
+            { name: 'ball.glb', scale: 15, video: 'Stretching.mp4', keyword: '공' },
+            { name: 'book.glb', scale: 25, video: 'book.mp4', keyword: '책' },
+            { name: 'close.glb', scale: 15, video: 'clothes.mp4', keyword: '옷' },
+            { name: 'glasses.glb', scale: 40, video: 'glasses.mp4', keyword: '안경' },
+            { name: 'guard.glb', scale: 25, video: 'brace.mp4', keyword: '보호대' },
+            { name: 'persimmon.glb', scale: 40, video: 'food.mp4', keyword: '감' },
         ];
 
         // 음성 인식 키워드 맵을 modelsToLoad를 기반으로 생성
@@ -606,11 +607,11 @@
 
         const scene = new THREE.Scene();
         // 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
-        scene.background = new THREE.Color(0xf5f5f5); 
+        scene.background = new THREE.Color(0xf5f5f5); 
 
-        // 카메라 생성 시 컨테이너의 현재 크기를 사용
-        const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
-        camera.position.set(0, 0, 15);
+        // ✅ 카메라 FOV를 50에서 40으로 줄이고, Z축 위치를 15에서 10으로 당겨서 모델이 더 크게 보이도록 조정
+        const camera = new THREE.PerspectiveCamera(40, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
+        camera.position.set(0, 0, 10); // 카메라를 앞으로 당김
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
@@ -645,6 +646,7 @@
                     model.position.y = FIXED_POSITION_Y;
                     model.position.z = FIXED_POSITION_Z;
 
+                    // ✅ 조정된 스케일 적용 (2번 섹션에서 이미 조정됨)
                     model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
                     model.userData.modelName = modelInfo.name;
                     model.userData.modelVideo = modelInfo.video;
