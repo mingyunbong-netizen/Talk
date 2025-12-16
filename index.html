@@ -597,7 +597,7 @@
 
         const FIXED_POSITION_Y = -6.0;
         const FIXED_POSITION_Z = 0.0;
-        const MODEL_SPACING_X = 10.0;
+        const MODEL_SPACING_X = 13.0;
         const HOVER_SCALE_FACTOR = 1.2;
 
         const scene = new THREE.Scene();
@@ -606,7 +606,7 @@
 
         // 카메라 생성 시 컨테이너의 현재 크기를 사용
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
-        camera.position.set(0, 0, 30);
+        camera.position.set(0, 0, 40);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
